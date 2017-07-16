@@ -1,15 +1,16 @@
 {
-  "name": "angular-starter",
-  "version": "6.0.0",
-  "description": "An Angular Webpack Starter kit featuring Angular (Router, Http, Forms, Services, Tests, E2E, Coverage), Karma, Protractor, Jasmine, Istanbul, TypeScript, and Webpack by AngularClass",
+  "name": "d3angular",
+  "version": "0.0.1",
+  "description": "An Angular2 d3 demo based on the AngularClass starter",
   "keywords": [
     "angular",
     "angular2",
     "angular4",
     "webpack",
-    "typescript"
+    "typescript",
+    "d3.js"
   ],
-  "author": "Patrick Stapleton <patrick@angularclass.com>",
+  "author": "AngularClass, Alex Thewsey",
   "homepage": "https://github.com/AngularClass/angular-starter",
   "license": "MIT",
   "scripts": {
@@ -49,7 +50,7 @@
     "protractor:live": "protractor --elementExplorer",
     "rimraf": "rimraf",
     "server:dev:hmr": "npm run server:dev -- --inline --hot",
-    "server:dev": "npm run webpack-dev-server -- --config config/webpack.dev.js --open --progress --profile --watch --content-base src/",
+    "server:dev": "npm run webpack-dev-server -- --config config/webpack.dev.js --progress --profile --watch --content-base src/",
     "server:prod": "http-server dist -c-1 --cors",
     "server:prod:ci": "http-server dist -p 3000 -c-1 --cors",
     "server": "npm run server:dev",
