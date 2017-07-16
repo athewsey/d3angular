@@ -19,6 +19,9 @@
       "node_modules/@types"
     ],
     "types": [
+      "d3-scale",
+      "d3-selection",
+      "d3-shape",
       "hammerjs",
       "jasmine",
       "node",
