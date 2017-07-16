@@ -167,15 +167,10 @@ module.exports = function (options) {
           exclude: [helpers.root('src', 'styles')]
         },
 
-        /**
-         * To string and sass loader support for *.scss files (from Angular components)
-         * Returns compiled css content as string
-         *
-         */
         {
           test: /\.scss$/,
-          use: ['to-string-loader', 'css-loader', 'sass-loader'],
-          exclude: [helpers.root('src', 'styles')]
+          use: ['raw-loader', 'sass-loader'],
+          exclude: [helpers.root('src', 'styles'), /node_modules/]
         },
 
         /**
