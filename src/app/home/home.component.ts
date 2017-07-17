@@ -113,10 +113,6 @@ class DiscreteGaussFilter {
 
 @Component({
   /**
-   * TODO: A way to accommodate d3 dynamic DOM without breaking ViewEncapsulation
-   */
-  encapsulation: ViewEncapsulation.None,
-  /**
    * The selector is what angular internally uses
    * for `document.querySelectorAll(selector)` in our index.html
    * where, in this case, selector is the string 'home'.
@@ -205,8 +201,14 @@ export class HomeComponent implements OnInit {
     const grp = svg.append("g");
     plotData.forEach((series, ix) => {
       grp.append("path").attr("class", `line line-${ix}`)
+        // TODO: Find way for download to preserve CSS, and move this styling back to CSS
+        .attr("fill", "none")
+        .attr("stroke", ["#e0e0e0", "#aaa", "#666", "black", "red"][ix])
         .attr("d", valLine(series));
     });
+    
+    const linkEl = document.getElementById("graphDownload");
+    linkEl.setAttribute("href", `data:image/svg+xml;base64,\n${window.btoa(graphEl.outerHTML)}`);
   }
 
   public submitState(value: string) {
