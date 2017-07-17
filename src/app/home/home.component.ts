@@ -12,6 +12,25 @@ import { AppState } from '../app.service';
 const SCALE: number = 2;
 const STEPSPERPX: number = 2;
 
+function* genNormal() {
+  var next: number;
+  
+  while (1) {
+    if (typeof next === "undefined") {
+      const x0 = 1.0 - Math.random();
+      const x1 = 1.0 - Math.random();
+
+      next = (Math.sqrt(-2.0 * Math.log(x0)) * Math.sin(2.0 * Math.PI * x1));
+      yield Math.sqrt(-2.0 * Math.log(x0)) * Math.cos(2.0 * Math.PI * x1);
+    }
+    else {
+      const result = next;
+      next = undefined;
+      yield result;
+    }
+  }
+}
+
 class DiscreteGaussFilter {
   /**
    * Gaussian exponential factor relating x position to std deviation
@@ -137,22 +156,43 @@ export class HomeComponent implements OnInit {
     const nSteps: number = this.height * STEPSPERPX;
     const time = Array.apply(null, { length: nSteps }).map((d, ix) => (ix / STEPSPERPX));
     const input = time.map((t) => (Math.random() * this.width));
+    const normGenerator = genNormal();
     const gaussFilters = [
       new DiscreteGaussFilter(1.5, 4),
+      new DiscreteGaussFilter(1.5, 4),
+      new DiscreteGaussFilter(2, 4),
+      new DiscreteGaussFilter(2, 4),
+      new DiscreteGaussFilter(2, 4),
       new DiscreteGaussFilter(3, 4),
-      new DiscreteGaussFilter(6, 4)
+      new DiscreteGaussFilter(7, 4)
     ];
-    const blurred = gaussFilters.map((f) => (f.filter(input)));
+    let blurred = [];
+    gaussFilters.forEach((f, ix) => {
+      blurred.push(
+        f.filter((blurred[ix - 1] || input).map(
+          // 12 = 2 directions * 3 approx std deviation limit * 2 shrinking factor:
+          (x) => (Math.max(0, Math.min(this.width, x + (normGenerator.next().value * this.width / 12))))
+        ))
+      )
+    });
+    blurred = [blurred[3], blurred[6]];
     return [
       time.map((t, ix) => ({ x: input[ix], y: t }))
-    ].concat(blurred.map((output) => (
-      output.map((x, ix) => ({ x: x, y: time[ix] }))
-    )));
+    ].concat(
+      blurred.map((output) => (
+        output.map((x, ix) => ({
+          x: x,
+          y: time[ix]
+        }))
+      )),
+      [gaussFilters[gaussFilters.length - 1].filter(input).map((x, ix) => ({ x: x, y: time[ix] }))]
+    );
   }
 
   public ngOnInit() {
     const me = this;
     const plotData = this.getPlotData();
+    console.log(plotData);
     const graphEl = document.getElementById("graph");
     graphEl.style.width = `${this.width * SCALE}px`;
     graphEl.style.height = `${this.height * SCALE}px`;

@@ -8,14 +8,18 @@ path.line {
     }
 
     &.line-1 {
-        stroke: #cacaca;
+        stroke: #bbb;
     }
 
     &.line-2 {
-        stroke: #919191;
+        stroke: #888;
     }
 
     &.line-3 {
         stroke: black;
+    }
+
+    &.line-4 {
+        stroke: red;
     }
 }
