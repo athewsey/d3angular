@@ -133,7 +133,7 @@ class DiscreteGaussFilter {
 })
 export class HomeComponent implements OnInit {
   width: number = (202 - 150);
-  height: number = (250 - 15);
+  height: number = (285 - 17.5);
   scaleX: ScaleLinear<number, number> = scaleLinear();
   scaleY: ScaleLinear<number, number> = scaleLinear();
   /**
@@ -151,7 +151,11 @@ export class HomeComponent implements OnInit {
   public getPlotData() {
     const nSteps: number = this.height * STEPSPERPX;
     const time = Array.apply(null, { length: nSteps }).map((d, ix) => (ix / STEPSPERPX));
-    const input = time.map((t) => (Math.random() * this.width));
+    const input = time.map((t, ix) => (
+      (this.width / 2)
+      + (Math.random() * this.width - (this.width / 2))
+      * Math.min(1, ix * STEPSPERPX / 100)
+    ));
     const normGenerator = genNormal();
     const gaussFilters = [
       new DiscreteGaussFilter(1.5, 4),
@@ -167,7 +171,10 @@ export class HomeComponent implements OnInit {
       blurred.push(
         f.filter((blurred[ix - 1] || input).map(
           // 12 = 2 directions * 3 approx std deviation limit * 2 shrinking factor:
-          (x) => (Math.max(0, Math.min(this.width, x + (normGenerator.next().value * this.width / 12))))
+          (x, ix) => (Math.max(0, Math.min(
+            this.width,
+            x + (normGenerator.next().value * this.width / 12) * Math.min(1, ix * STEPSPERPX / 100)
+          )))
         ))
       )
     });
