@@ -1,1 +1,21 @@
 /*styles for home content only*/
+path.line {
+    stroke: #e0e0e0;
+    fill: none;
+
+    &.line-0 {
+        stroke: #e0e0e0;
+    }
+
+    &.line-1 {
+        stroke: #cacaca;
+    }
+
+    &.line-2 {
+        stroke: #919191;
+    }
+
+    &.line-3 {
+        stroke: black;
+    }
+}
