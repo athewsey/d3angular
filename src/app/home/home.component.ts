@@ -1,115 +1,20 @@
-import {
-  Component,
-  OnInit
-} from '@angular/core';
-
-import { ViewEncapsulation } from "@angular/core";
+// NPM Dependencies
+import { Component, OnInit } from "@angular/core";
 import { ScaleLinear, scaleLinear } from "d3-scale";
 import { select as d3select, ValueFn } from "d3-selection";
 import { Line, line } from "d3-shape";
-import { AppState } from '../app.service';
 
+// Local Dependencies
+import { AppState } from '../app.service';
+import { DiscreteGaussFilter, genNormal } from "../../util/sigproc";
+
+// Configuration
+/**
+ * This app was used to draw a graph at specific size for a specific purpose, so it does some kinda
+ * skewy absolute sizing stuff.
+ */
 const SCALE: number = 2;
 const STEPSPERPX: number = 2;
-
-function* genNormal() {
-  var next: number;
-  
-  while (1) {
-    if (typeof next === "undefined") {
-      const x0 = 1.0 - Math.random();
-      const x1 = 1.0 - Math.random();
-
-      next = (Math.sqrt(-2.0 * Math.log(x0)) * Math.sin(2.0 * Math.PI * x1));
-      yield Math.sqrt(-2.0 * Math.log(x0)) * Math.cos(2.0 * Math.PI * x1);
-    }
-    else {
-      const result = next;
-      next = undefined;
-      yield result;
-    }
-  }
-}
-
-class DiscreteGaussFilter {
-  /**
-   * Gaussian exponential factor relating x position to std deviation
-   */
-  expFactor: number;
-
-  /**
-   * Number of samples to each side of the central sample
-   */
-  nSideSamples: number;
-
-  /**
-   * Coefficient[AvailablePre][AvailablePost][ix]
-   */
-  coeffs: Array<Array<Array<number>>>;
-
-  /**
-   * 
-   * @param stddev 
-   * @param precision 
-   */
-  constructor(stddev, precision) {
-    const me = this;
-    this.expFactor = -1 / (2 * stddev ** 2);
-    this.nSideSamples = Math.max(1, Math.round(stddev * precision));
-
-    // Exponential coefficients for the forward half of the filter (symmetric):
-    // Array.apply.map to initialise array of given size
-    const halfExps = Array.apply(
-      null,
-      { length: this.nSideSamples }
-    ).map((nothing, ix) => (
-      Math.exp(me.expFactor * (ix + 1) ** 2)
-    ));
-
-    // Cumulative sum of this and following halfExps.
-    const halfSums = halfExps.reduce(
-      (acc: Array<number>, next: number, ix: number) => {
-        // [][-1] = undefined, no error
-        acc.push(next + (acc[ix - 1] || 0));
-        return acc;
-      },
-      []
-    );
-
-    this.coeffs = Array.apply(
-      null,
-      { length: this.nSideSamples + 1 }
-    ).map((nothing, ixAvailPre) => (
-      Array.apply(
-        null,
-        { length: this.nSideSamples + 1 }
-      ).map((nothing, ixAvailPost) => {
-        const coeffSum = (halfSums[ixAvailPre - 1] || 0) + 1 + (halfSums[ixAvailPost - 1] || 0);
-        return halfExps
-          .slice(0, ixAvailPre)
-          .reverse()
-          .concat(1, halfExps.slice(0, ixAvailPost))
-          .map((d) => (d / coeffSum));
-      })
-    ));
-  }
-
-  filter(input: Array<number>): Array<number> {
-    const me = this;
-    const len = input.length;
-    return input.map((d, ix) => {
-      const availablePre = Math.min(ix, me.nSideSamples);
-      const availablePost = Math.min(len - (ix + 1), me.nSideSamples);
-      const coeffs = me.coeffs[availablePre][availablePost];
-      return input.slice(
-        ix - availablePre,
-        ix + availablePost + 1
-      ).reduce((acc, nextIn, ix) => (
-        acc + nextIn * coeffs[ix]
-      ), 0);
-    });
-  }
-}
 
 @Component({
   /**
@@ -147,10 +52,9 @@ export class HomeComponent implements OnInit {
     public appState: AppState
   ) {}
 
-
   public getPlotData() {
     const nSteps: number = this.height * STEPSPERPX;
-    const time = Array.apply(null, { length: nSteps }).map((d, ix) => (ix / STEPSPERPX));
+    const time = Array.apply(null, { length: nSteps }).map((nothing, ix) => (ix / STEPSPERPX));
     const input = time.map((t, ix) => (
       (this.width / 2)
       + (Math.random() * this.width - (this.width / 2))
@@ -178,6 +82,8 @@ export class HomeComponent implements OnInit {
         ))
       )
     });
+
+    // We only actually want to plot a few of the intermediate stages
     blurred = [blurred[3], blurred[6]];
     return [
       time.map((t, ix) => ({ x: input[ix], y: t }))
@@ -208,7 +114,8 @@ export class HomeComponent implements OnInit {
     const grp = svg.append("g");
     plotData.forEach((series, ix) => {
       grp.append("path").attr("class", `line line-${ix}`)
-        // TODO: Find way for download to preserve CSS, and move this styling back to CSS
+        // TODO: Find way for download to preserve CSS, and move this styling back to CSS.
+        // (Will need to re-break ViewEncapsulation for that to work)
         .attr("fill", "none")
         .attr("stroke", ["#e0e0e0", "#aaa", "#666", "black", "red"][ix])
         .attr("d", valLine(series));
@@ -216,11 +123,5 @@ export class HomeComponent implements OnInit {
     
     const linkEl = document.getElementById("graphDownload");
     linkEl.setAttribute("href", `data:image/svg+xml;base64,\n${window.btoa(graphEl.outerHTML)}`);
-  }
-
-  public submitState(value: string) {
-    console.log('submitState', value);
-    this.appState.set('value', value);
-    this.localState.value = '';
   }
 }
